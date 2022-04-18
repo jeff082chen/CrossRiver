@@ -1,7 +1,8 @@
 import bisect
 
-def UniformCost(start):
+def uniformCost(start):
     '''
+    pseudocode code:
     1.   function UCS(Graph, start, target):
     2.      Add the starting node to the opened list. The node has
     3.      has zero distance value from itself
@@ -31,30 +32,23 @@ def UniformCost(start):
     open = [start]
     close = []
 
-    while True:
+    # count loop
+    count = 0
 
-        if not open:
-            break
-
+    while open:
+        count += 1
         current = open.pop(0)
         print("current:", current.state, current.total_cost)
 
         if current.isTarget():
-            path = []
-            while current.parent != None:
-                path.append(current)
-                current = current.parent
-            path.append(current)
-            path.reverse()
-            return path
+            # print out the value of count
+            print('count:', count)
+            return {'path': current.path(), 'count': count}
 
         close.append(current)
 
         # current is already recorded as parent when creating
         children = current.allValidChild()
-
-        if not children:
-            continue
 
         print('nodes:', sorted([(node.state, node.total_cost) for node in children], key = lambda node: node[0]))
 
@@ -73,3 +67,70 @@ def UniformCost(start):
 
     return None
 
+
+
+
+
+def AStartSearch(start):
+    '''
+    Add START to OPEN list
+    while OPEN not empty
+        get node n from OPEN that has the lowest f(n)
+        if n is GOAL then return path
+        move n to CLOSED
+        for each n' = CanMove(n , direction)
+            g(n') = g(n) + cost(n,n')
+            calculate f(n')=g(n')+h(n')
+            if n' in OPEN list and new n' is not better , continue
+            if n' in CLOSED list and new n' is not better , continue
+            remove any n' from OPEN and CLOSED
+            add n as n's parent
+            add n' to OPEN …從OPEN 開始   
+        end for
+    end while
+    if we get here , then there is No Solution
+    '''
+
+    open = [start]
+    close = []
+
+    # count loop
+    count = 0
+
+    while open:
+        count += 1
+        current = open.pop(0)
+        print("current:", current.state, current.total_cost)
+
+        if current.isTarget():
+            # print out the value of count
+            print('count:', count)
+            return {'path': current.path(), 'count': count}
+
+        bisect.insort(close, current)
+
+        # current is already recorded as parent when creating
+        children = current.allValidChild()
+
+        print('nodes:', sorted([(node.state, node.total_cost) for node in children], key = lambda node: node[0]))
+        print()
+
+        for child in children:
+
+            if child in open and child.total_cost >= open[open.index(child)].total_cost:
+                continue
+            if child in close and child.total_cost >= close[close.index(child)].total_cost:
+                continue
+            
+            if child in open:
+                open.pop(open.index(child))
+            if child in close:
+                close.pop(close.index(child))
+
+            bisect.insort(open, child)
+
+        print('open:', [(node.state, node.total_cost, node.h()) for node in open], '\n')
+        print('close:', [(node.state, node.total_cost, node.h()) for node in close], '\n')
+        print()
+
+    return None
