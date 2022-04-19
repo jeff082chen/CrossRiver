@@ -113,8 +113,6 @@ def AStartSearch(start, /, debug = False):
             print("current:", current.state, current.total_time, current.total_price)
 
         if current.isTarget():
-            # print out the value of count
-            print('count:', count)
             return {'path': current.path(), 'count': count}
 
         bisect.insort(close, current)
@@ -147,7 +145,5 @@ def AStartSearch(start, /, debug = False):
             print('open:', [(node.state, node.total_time, node.total_price) for node in open], '\n')
             print('close:', [(node.state, node.total_time, node.total_price) for node in close], '\n')
             print()
-
-    if debug:
-        print('count:', count)
+            
     return None

@@ -234,16 +234,22 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
             def __eq__(self, other) -> bool:
                 if other is None:
                     return False
+                # if price and time is both better, then it's definitely better
+                # if only one of them is better, it's hard to tell which one is better, so add both in open list
                 return self.__hash__() == other.__hash__() and (self.limitation_factor() == other.limitation_factor() or (self.total_time < other.total_time and self.total_price < other.total_price))
 
         if alg == 'AS':
             def __lt__(self, other) -> bool:
-                if self.total_cost() + self.h() == other.total_cost() + other.h():
-                    return self.h() < other.h()
-                return self.total_cost() + self.h() < other.total_cost() + other.h()
+                if self.total_cost() + self.h() != other.total_cost() + other.h():
+                    return self.total_cost() + self.h() < other.total_cost() + other.h()
+                if self.total_cost() != other.total_cost():
+                    return self.total_cost() < other.total_cost()
+                return self.limitation_factor() < other.limitation_factor()
         elif alg == 'UC':
             def __lt__(self, other) -> bool:
-                return self.total_cost() < other.total_cost()
+                if self.total_cost() != other.total_cost():
+                    return self.total_cost() < other.total_cost()
+                return self.limitation_factor() < other.limitation_factor()
 
         def __hash__(self) -> int:
             return int(self.state, 16)
