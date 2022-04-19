@@ -1,6 +1,6 @@
 import bisect
 
-def uniformCost(start):
+def uniformCost(start, /, debug = False):
     '''
     pseudocode code:
     1.   function UCS(Graph, start, target):
@@ -38,7 +38,9 @@ def uniformCost(start):
     while open:
         count += 1
         current = open.pop(0)
-        print("current:", current.state, current.total_cost)
+
+        if debug:
+            print("current:", current.state, current.total_time, current.total_price)
 
         if current.isTarget():
             # print out the value of count
@@ -50,28 +52,34 @@ def uniformCost(start):
         # current is already recorded as parent when creating
         children = current.allValidChild()
 
-        print('nodes:', sorted([(node.state, node.total_cost) for node in children], key = lambda node: node[0]))
+        if debug:
+            print('nodes:', sorted([(node.state, node.total_time, node.total_price) for node in children], key = lambda node: node[0]))
 
         for child in children:
+            if child.over_cost():
+                continue
             if child not in open and child not in close:
                 bisect.insort(open, child)
             elif child in open:
                 idx = open.index(child)
-                if child.total_cost < open[idx].total_cost:
+                if child.total_cost() < open[idx].total_cost():
                     open.pop(idx)
                     bisect.insort(open, child)
         
-        print('open:', [(node.state, node.total_cost) for node in open])
-        print('close:', [(node.state, node.total_cost) for node in close])
-        print()
+        if debug:
+            print('open:', [(node.state, node.total_time, node.total_price) for node in open])
+            print('close:', [(node.state, node.total_time, node.total_price) for node in close])
+            print()
 
+    if debug:
+        print('count:', count)
     return None
 
 
 
 
 
-def AStartSearch(start):
+def AStartSearch(start, /, debug = False):
     '''
     Add START to OPEN list
     while OPEN not empty
@@ -100,7 +108,9 @@ def AStartSearch(start):
     while open:
         count += 1
         current = open.pop(0)
-        print("current:", current.state, current.total_cost)
+
+        if debug:
+            print("current:", current.state, current.total_time, current.total_price)
 
         if current.isTarget():
             # print out the value of count
@@ -112,14 +122,18 @@ def AStartSearch(start):
         # current is already recorded as parent when creating
         children = current.allValidChild()
 
-        print('nodes:', sorted([(node.state, node.total_cost) for node in children], key = lambda node: node[0]))
-        print()
+        if debug:
+            print('nodes:', sorted([(node.state, node.total_time, node.total_price) for node in children], key = lambda node: node[0]))
+            print()
 
         for child in children:
 
-            if child in open and child.total_cost >= open[open.index(child)].total_cost:
+            if child.over_cost():
                 continue
-            if child in close and child.total_cost >= close[close.index(child)].total_cost:
+
+            if child in open and child.total_cost() >= open[open.index(child)].total_cost():
+                continue
+            if child in close and child.total_cost() >= close[close.index(child)].total_cost():
                 continue
             
             if child in open:
@@ -129,8 +143,11 @@ def AStartSearch(start):
 
             bisect.insort(open, child)
 
-        print('open:', [(node.state, node.total_cost, node.h()) for node in open], '\n')
-        print('close:', [(node.state, node.total_cost, node.h()) for node in close], '\n')
-        print()
+        if debug:
+            print('open:', [(node.state, node.total_time, node.total_price) for node in open], '\n')
+            print('close:', [(node.state, node.total_time, node.total_price) for node in close], '\n')
+            print()
 
+    if debug:
+        print('count:', count)
     return None

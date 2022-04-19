@@ -46,49 +46,26 @@ def generateAllPossibleMoves(N, M, boatA_capacity, boatB_capacity):
 
 
 # class factories for the nodes
-def setParameter(N: int, M: int, /, mode: bool, alg: str):
+def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debug: bool = False, boatA_capacity: int = 2, boatB_capacity: int = 3, boatA_cost: int = 3, boatB_cost: int = 25):
     ''' return a class that construct each state in searching
     cannibals: N
     missionaries: N + M
     mode: 0 -> minimun price, 1 -> minimun time
     '''
 
-    valid = mode in [0, 1] and N in range(3, 11) and M in range(0, 3)
+    valid = mode in ['p', 't'] and N in range(3, 11) and M in range(0, 3)
     assert valid, 'Invalid Parameter Error'
 
-    # set parameters
-    boatA_capacity = 2
-    boatB_capacity = 3
-    boatA_cost = 3
-    boatB_cost = 25
+    # set state
     state = '11' + hex(N)[2:] + hex(N + M)[2:]
 
     # [0:1]: number of cannibal/missionary on boatA
     # [2:3]: number of cannibal/missionary on boatB
     all_possible_moves = generateAllPossibleMoves(N, M, boatA_capacity, boatB_capacity)
 
-    def price(self, move: str) -> int:
-        cost = 0
-        if move[:2] != '00':
-            cost += boatA_cost
-        if move[2:] != '00':
-            cost += boatB_cost
-        return cost
-
-    def time(self, move: str) -> int:
-        if move[:2] == '00' and move[2:] == '00':
-            return 0
-        return 1
-
-    def heuristics_time(self) -> int:
-        return (int(self.state[2], 16) + int(self.state[3], 16)) / boatB_capacity
-
-    def heuristics_price(self) -> int:
-        return (heuristics_time(self) // 2) * (boatA_cost + boatB_cost) + (heuristics_time(self) % 2) * boatA_cost
-
     class Node:
 
-        def __init__(self, /, state = state, total_cost = 0, parent = None, move = None):
+        def __init__(self, /, state = state, total_price = 0, total_time = 0, parent = None, move = None):
             self.cannibal_count = N
             self.missionary_count = N + M
 
@@ -98,8 +75,10 @@ def setParameter(N: int, M: int, /, mode: bool, alg: str):
             # [3]: missionaries in right
             self.state = state
             self.move = move
+            self.limit = limit
 
-            self.total_cost = total_cost
+            self.total_price = total_price
+            self.total_time = total_time
             self.parent = parent
 
             self.all_valid_moves = [move for move in all_possible_moves if self.isValidMove(move)]
@@ -194,8 +173,9 @@ def setParameter(N: int, M: int, /, mode: bool, alg: str):
             result = []
             for move in self.all_valid_moves:
                 state = self.stateAfterMove(move)
-                total_cost = self.total_cost + self.cost(move)
-                result.append(Node(state = state, total_cost = total_cost, parent = self, move = move))
+                total_price = self.total_price + self.price(move)
+                total_time = self.total_time + self.time(move)
+                result.append(Node(state = state, total_price = total_price, total_time = total_time, parent = self, move = move))
             return result
 
         def path(self):
@@ -208,30 +188,70 @@ def setParameter(N: int, M: int, /, mode: bool, alg: str):
             path.reverse()
             return path
 
-        cost = price if mode == 0 else time
-        h = heuristics_price if mode == 0 else heuristics_time
+        def price(self, move: str) -> int:
+            cost = 0
+            if move[:2] != '00':
+                cost += boatA_cost
+            if move[2:] != '00':
+                cost += boatB_cost
+            return cost
 
-        def __eq__(self, other) -> bool:
-            if other is None:
-                return False
-            return self.__hash__() == other.__hash__()
+        def time(self, move: str) -> int:
+            if move[:2] == '00' and move[2:] == '00':
+                return 0
+            return 1
+
+        def heuristics_time(self) -> int:
+            return (int(self.state[2], 16) + int(self.state[3], 16)) / boatB_capacity
+
+        def heuristics_price(self) -> int:
+            return (self.heuristics_time() // 2) * (boatA_cost + boatB_cost) + (self.heuristics_time() % 2) * boatA_cost
+
+        h = heuristics_price if mode == 'p' else heuristics_time
+
+        if mode == 'p':
+            def total_cost(self) -> int:
+                return self.total_price
+            def limitation_factor(self):
+                return self.total_time
+        if mode == 't':
+            def total_cost(self) -> int:
+                return self.total_time
+            def limitation_factor(self):
+                return self.total_price
+
+        def over_cost(self) -> int:
+                if self.limit == None:
+                    return False
+                return self.limitation_factor() > self.limit
+
+        if limit == None:
+            def __eq__(self, other) -> bool:
+                if other is None:
+                    return False
+                return self.__hash__() == other.__hash__()
+        else:
+            def __eq__(self, other) -> bool:
+                if other is None:
+                    return False
+                return self.__hash__() == other.__hash__() and (self.limitation_factor() == other.limitation_factor() or (self.total_time < other.total_time and self.total_price < other.total_price))
 
         if alg == 'AS':
             def __lt__(self, other) -> bool:
-                if self.total_cost + self.h() == other.total_cost + other.h():
+                if self.total_cost() + self.h() == other.total_cost() + other.h():
                     return self.h() < other.h()
-                return self.total_cost + self.h() < other.total_cost + other.h()
+                return self.total_cost() + self.h() < other.total_cost() + other.h()
         elif alg == 'UC':
             def __lt__(self, other) -> bool:
-                return self.total_cost < other.total_cost
+                return self.total_cost() < other.total_cost()
 
         def __hash__(self) -> int:
             return int(self.state, 16)
 
         def uniformCost(self):
-            return uniformCost(self)
+            return uniformCost(self, debug = debug)
 
         def AStartSearch(self):
-            return AStartSearch(self)
+            return AStartSearch(self, debug = debug)
 
     return Node
