@@ -34,20 +34,26 @@ def uniformCost(start, /, debug = False):
 
     # count loop
     count = 0
+    # count new_nodes
+    open_nodes = 0
+    close_nodes = 0
 
     while open:
         count += 1
         current = open.pop(0)
 
+        if current.isTarget():
+            # print out the value of count
+            if debug:
+                print('open_nodes:', open_nodes)
+                print('close_nodes:', close_nodes)
+            return {'path': current.path(), 'count': count}
+
         if debug:
             print("current:", current.state, current.total_time, current.total_price)
 
-        if current.isTarget():
-            # print out the value of count
-            print('count:', count)
-            return {'path': current.path(), 'count': count}
-
         close.append(current)
+        close_nodes += 1
 
         # current is already recorded as parent when creating
         children = current.allValidChild()
@@ -60,11 +66,13 @@ def uniformCost(start, /, debug = False):
                 continue
             if child not in open and child not in close:
                 bisect.insort(open, child)
+                open_nodes += 1
             elif child in open:
                 idx = open.index(child)
                 if child.total_cost() < open[idx].total_cost():
                     open.pop(idx)
                     bisect.insort(open, child)
+                    open_nodes += 1
         
         if debug:
             print('open:', [(node.state, node.total_time, node.total_price) for node in open])
@@ -72,7 +80,8 @@ def uniformCost(start, /, debug = False):
             print()
 
     if debug:
-        print('count:', count)
+        print('open count:', open_nodes)
+        print('close count:', close_nodes)
     return None
 
 
@@ -104,18 +113,26 @@ def AStartSearch(start, /, debug = False):
 
     # count loop
     count = 0
+    # count new_nodes
+    open_nodes = 0
+    close_nodes = 0
 
     while open:
         count += 1
         current = open.pop(0)
 
+        if current.isTarget():
+            # print out the value of count
+            if debug:
+                print('open_nodes:', open_nodes)
+                print('close_nodes:', close_nodes)
+            return {'path': current.path(), 'count': count}
+
         if debug:
             print("current:", current.state, current.total_time, current.total_price)
 
-        if current.isTarget():
-            return {'path': current.path(), 'count': count}
-
         bisect.insort(close, current)
+        close_nodes += 1
 
         # current is already recorded as parent when creating
         children = current.allValidChild()
@@ -140,10 +157,14 @@ def AStartSearch(start, /, debug = False):
                 close.pop(close.index(child))
 
             bisect.insort(open, child)
+            open_nodes += 1
 
         if debug:
-            print('open:', [(node.state, node.total_time, node.total_price) for node in open], '\n')
+            print('open:', [(node.state, node.total_time, node.total_price, round(node.h(), 2)) for node in open], '\n')
             print('close:', [(node.state, node.total_time, node.total_price) for node in close], '\n')
             print()
-            
+
+    if debug:
+        print('open count:', open_nodes)
+        print('close count:', close_nodes)
     return None

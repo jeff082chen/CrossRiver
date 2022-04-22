@@ -15,7 +15,7 @@ total_count_p_U = 0
 
 for N in range(3, 11):
     for M in range(0, 3):
-        for mode in [0, 1]:
+        for mode in ['p', 't']:
             for alg in ['AS', 'UC']:
                 start_time = time.time()
                 Node = setParameter(N, M, mode = mode, alg = alg)
@@ -28,20 +28,20 @@ for N in range(3, 11):
                 end_time = time.time()
 
                 last = ans['path'][-1]
-                result = 'N:' + str(N) + ',M:' + str(M) + ',Mode:' + str(mode) + ',Alg:' + alg + ',Cost:' + str(last.total_cost) + ',Time:' + str(end_time - start_time) + 'count:' + str(ans['count'])
+                result = 'N:' + str(N) + ',M:' + str(M) + ',Mode:' + str(mode) + ',Alg:' + alg + ',Cost:' + str(last.total_cost()) + ',Time:' + str(end_time - start_time) + 'count:' + str(ans['count'])
                 results.append(result)
 
-                if mode == 0 and alg == 'AS':
-                    total_price_A += last.total_cost
+                if mode == 'p' and alg == 'AS':
+                    total_price_A += last.total_cost()
                     total_count_p_A += ans['count']
-                if mode == 1 and alg == 'AS':
-                    total_time_A += last.total_cost
+                if mode == 't' and alg == 'AS':
+                    total_time_A += last.total_cost()
                     total_count_t_A += ans['count']
-                if mode == 0 and alg == 'UC':
-                    total_price_U += last.total_cost
+                if mode == 'p' and alg == 'UC':
+                    total_price_U += last.total_cost()
                     total_count_p_U += ans['count']
-                if mode == 1 and alg == 'UC':
-                    total_time_U += last.total_cost
+                if mode == 't' and alg == 'UC':
+                    total_time_U += last.total_cost()
                     total_count_t_U += ans['count']
 
             results.append('\n')

@@ -53,11 +53,11 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
     mode: 0 -> minimun price, 1 -> minimun time
     '''
 
-    valid = mode in ['p', 't'] and N in range(3, 11) and M in range(0, 3)
+    valid = mode in ['p', 't'] and N in range(3, 11) and M in range(0, 3) and alg in ['AS', 'UC']
     assert valid, 'Invalid Parameter Error'
 
     # set state
-    state = '11' + hex(N)[2:] + hex(N + M)[2:]
+    state = '3' + hex(N)[2:] + hex(N + M)[2:]
 
     # [0:1]: number of cannibal/missionary on boatA
     # [2:3]: number of cannibal/missionary on boatB
@@ -69,10 +69,9 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
             self.cannibal_count = N
             self.missionary_count = N + M
 
-            # [0]: boatA in right
-            # [1]: boatB in right
-            # [2]: cannibals in right
-            # [3]: missionaries in right
+            # [0]: 00 -> both left, 10 -> boatA right, 01 -> boatB right, 11 -> both right
+            # [1]: cannibals in right
+            # [2]: missionaries in right
             self.state = state
             self.move = move
             self.limit = limit
@@ -85,39 +84,29 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
 
         # convert state string into number
         def convertState(self):
-            cannibals_r = int(self.state[2], 16)
-            cannibals_l = N - int(self.state[2], 16)
+            cannibals_r = int(self.state[1], 16)
+            cannibals_l = N - int(self.state[1], 16)
             assert 0 <= cannibals_r <= N, "Invalid State Error"
 
-            missionaries_r = int(self.state[3], 16)
-            missionaries_l = N + M - int(self.state[3], 16)
+            missionaries_r = int(self.state[2], 16)
+            missionaries_l = N + M - int(self.state[2], 16)
             assert 0 <= missionaries_r <= (N + M), "Invalid State Error"
 
             return cannibals_r, cannibals_l, missionaries_r, missionaries_l
 
         # convert move string into number
         def convertMove(self, move):
-            cannibals_to_right = 0
-            cannibals_to_left = 0
-            missionaries_to_right = 0
-            missionaries_to_left = 0
 
-            boatA_in_right = self.state[0] == '1'
-            boatB_in_right = self.state[1] == '1'
+            boatA_in_right = (int(self.state[0]) >> 1) & 1
+            boatA_in_left = 1 - boatA_in_right
+            boatB_in_right = int(self.state[0]) & 1
+            boatB_in_left = 1 - boatB_in_right
 
-            if (boatA_in_right): # boatA from r to l
-                cannibals_to_left += int(move[0], 16)
-                missionaries_to_left += int(move[1], 16)
-            else: # boatA from r to l
-                cannibals_to_right += int(move[0], 16)
-                missionaries_to_right += int(move[1], 16)
+            cannibals_to_right = int(move[0], 16) * boatA_in_left + int(move[2], 16) * boatB_in_left
+            missionaries_to_right = int(move[1], 16) * boatA_in_left + int(move[3], 16) * boatB_in_left
 
-            if (boatB_in_right): # boatB from r to l
-                cannibals_to_left += int(move[2], 16)
-                missionaries_to_left += int(move[3], 16)
-            else: # boatA from r to l
-                cannibals_to_right += int(move[2], 16)
-                missionaries_to_right += int(move[3], 16)
+            cannibals_to_left = int(move[0], 16) * boatA_in_right + int(move[2], 16) * boatB_in_right
+            missionaries_to_left = int(move[1], 16) * boatA_in_right + int(move[3], 16) * boatB_in_right
 
             return cannibals_to_right, cannibals_to_left, missionaries_to_right, missionaries_to_left
 
@@ -154,20 +143,19 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
             cannibals_r = cannibals_r - cannibals_to_l + cannibals_to_r
             missionaries_r = missionaries_r - missionaries_to_l + missionaries_to_r
 
-            if move[:2] != '00':
-                boatA_in_right = '1' if self.state[0] == '0' else '0'
-            else:
-                boatA_in_right = self.state[0]
+            if move[:2] == '00' and move[2:] == '00': # both didn't move
+                boats = int(self.state[0])
+            elif move[:2] == '00': # boatA didn't move
+                boats = int(self.state[0]) ^ 1
+            elif move[2:] == '00': # boatB didn't move
+                boats = int(self.state[0]) ^ 2
+            else: # both moved
+                boats = int(self.state[0]) ^ 3
 
-            if move[2:] != '00':
-                boatB_in_right = '1' if self.state[1] == '0' else '0'
-            else:
-                boatB_in_right = self.state[1]
-
-            return boatA_in_right + boatB_in_right + hex(cannibals_r)[2:] + hex(missionaries_r)[2:]
+            return str(boats) + hex(cannibals_r)[2:] + hex(missionaries_r)[2:]
 
         def isTarget(self) -> bool:
-            return self.state[2:] == '00'
+            return self.state[1:] == '00'
 
         def allValidChild(self) -> list:
             result = []
@@ -202,7 +190,9 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
             return 1
 
         def heuristics_time(self) -> int:
-            return (int(self.state[2], 16) + int(self.state[3], 16)) / boatB_capacity
+            if self.isTarget():
+                return 0
+            return (int(self.state[1], 16) + int(self.state[2], 16)) / boatB_capacity + (1 if self.state[0] == '0' else 0)
 
         def heuristics_price(self) -> int:
             return (self.heuristics_time() // 2) * (boatA_cost + boatB_cost) + (self.heuristics_time() % 2) * boatA_cost
@@ -221,9 +211,9 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
                 return self.total_price
 
         def over_cost(self) -> int:
-                if self.limit == None:
-                    return False
-                return self.limitation_factor() > self.limit
+            if self.limit == None:
+                return False
+            return self.limitation_factor() > self.limit
 
         if limit == None:
             def __eq__(self, other) -> bool:
@@ -234,16 +224,17 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
             def __eq__(self, other) -> bool:
                 if other is None:
                     return False
-                # if price and time is both better, then it's definitely better
+                # if price and time are both better, then it's definitely better
+                # if price and time are both worse, then it's definitely worse
                 # if only one of them is better, it's hard to tell which one is better, so add both in open list
-                return self.__hash__() == other.__hash__() and (self.limitation_factor() == other.limitation_factor() or (self.total_time < other.total_time and self.total_price < other.total_price))
+                return self.__hash__() == other.__hash__() and (self.limitation_factor() == other.limitation_factor() or (self.total_time < other.total_time and self.total_price < other.total_price) or (self.total_time > other.total_time and self.total_price > other.total_price))
 
         if alg == 'AS':
             def __lt__(self, other) -> bool:
                 if self.total_cost() + self.h() != other.total_cost() + other.h():
                     return self.total_cost() + self.h() < other.total_cost() + other.h()
-                if self.total_cost() != other.total_cost():
-                    return self.total_cost() < other.total_cost()
+                if self.h() != other.h():
+                    return self.h() < other.h()
                 return self.limitation_factor() < other.limitation_factor()
         elif alg == 'UC':
             def __lt__(self, other) -> bool:
