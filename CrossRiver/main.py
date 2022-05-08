@@ -25,19 +25,27 @@ if __name__ == '__main__':
     try:
         for arg in sys.argv[1:]:
             if arg[:2] == '-N':
+                assert N is None, Exception("Duplicate argument")
                 N = int(arg[2:])
             elif arg[:2] == '-M':
+                assert M is None, Exception("Duplicate argument")
                 M = int(arg[2:])
             elif arg == '-p' or arg == '-t':
+                assert mode is None, Exception("Duplicate argument")
                 mode = arg[-1]
-            elif arg[:2] == '-a':
-                alg = arg[2:]
+            elif arg == '-AS' or arg == '-UC':
+                assert alg is None, Exception("Duplicate argument")
+                alg = arg[1:]
             elif arg == '-d':
+                assert debug == False, Exception("Duplicate argument")
                 debug = True
             elif arg[:2] == '-l':
+                assert limit is None, Exception("Duplicate argument")
                 limit = int(arg[2:])
             else:
                 exit(1)
+    except Exception("Duplicate argument"):
+        exit(1)
     except:
         raise Exception("Invalid parameter")
 

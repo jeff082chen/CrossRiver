@@ -11,9 +11,9 @@ $ cd CrossRiver
 # arguments
 # -N: integer between 3~10
 # -M: integer between 0~2
-# -a algorithm: UC -> UniformCost, AS -> A*
 # -l: limit of cost (time limit if -p, price limit if -t) (default: no limit)
 # -d: debug mode
+# algorithm: -UC -> UniformCost, -AS -> A*
 # mode: -p -> minimum price, -t -> minimun time
-$ python -m CrossRiver.main -N[3..10] -M[0..2] [-t or -p] -a[alg] [-d] [-l[limit]]
+$ python -m CrossRiver.main -N[3..10] -M[0..2] [-t or -p] [-UC or -AS] [-d] [-l[limit]]
 ```
