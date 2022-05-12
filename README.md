@@ -8,6 +8,9 @@ $ git clone git@github.com:jeff082chen/CrossRiver.git
 
 $ cd CrossRiver
 
+# install dependencies
+$ pip install -r requirements.txt
+
 # arguments
 # -N: integer between 3~10
 # -M: integer between 0~2
