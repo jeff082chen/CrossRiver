@@ -115,6 +115,7 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
             cannibals_r, cannibals_l, missionaries_r, missionaries_l = self.convertState()
             cannibals_to_r, cannibals_to_l, missionaries_to_r, missionaries_to_l = self.convertMove(move)
 
+            # before on board
             if cannibals_r < cannibals_to_l:
                 return False
             if cannibals_l < cannibals_to_r:
@@ -124,10 +125,21 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
             if missionaries_l < missionaries_to_r:
                 return False
 
-            right_cannibals = cannibals_r - cannibals_to_l + cannibals_to_r
-            left_cannibals = cannibals_l - cannibals_to_r + cannibals_to_l
-            right_missionaries = missionaries_r - missionaries_to_l + missionaries_to_r
-            left_missionaries = missionaries_l - missionaries_to_r + missionaries_to_l
+            # after on board
+            right_cannibals = cannibals_r - cannibals_to_l
+            left_cannibals = cannibals_l - cannibals_to_r
+            right_missionaries = missionaries_r - missionaries_to_l
+            left_missionaries = missionaries_l - missionaries_to_r
+            if right_cannibals > right_missionaries and right_missionaries != 0:
+                return False
+            if left_cannibals > left_missionaries and left_missionaries != 0:
+                return False
+
+            # moving complete
+            right_cannibals += cannibals_to_r
+            left_cannibals += cannibals_to_l
+            right_missionaries += missionaries_to_r
+            left_missionaries += missionaries_to_l
             if right_cannibals > right_missionaries and right_missionaries != 0:
                 return False
             if left_cannibals > left_missionaries and left_missionaries != 0:
