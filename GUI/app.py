@@ -165,10 +165,14 @@ class App:
         self.N_input = tk.Text(self.root_div1, width = 3, height = 1, font = ('Arial', 12), bg = 'white', highlightbackground = "black", highlightthickness = 2)
         self.M_label = tk.Label(self.root_div1, text = 'M:', font = ('Arial', 20), bg = 'white')
         self.M_input = tk.Text(self.root_div1, width = 3, height = 1, font = ('Arial', 12), bg = 'white', highlightbackground = "black", highlightthickness = 2)
-        self.mode_label = tk.Label(self.root_div1, text = 'mode:', font = ('Arial', 20), bg = 'white')
-        self.mode_input = tk.Text(self.root_div1, width = 3, height = 1, font = ('Arial', 12), bg = 'white', highlightbackground = "black", highlightthickness = 2)
         self.limit_lable = tk.Label(self.root_div1, text = 'limit:', font = ('Arial', 20), bg = 'white')
         self.limit_input = tk.Text(self.root_div1, width = 3, height = 1, font = ('Arial', 12), bg = 'white', highlightbackground = "black", highlightthickness = 2)
+
+        self.mode_lable = tk.Label(self.root_div1, text = 'mode:', font = ('Arial', 20), bg = 'white')
+        self.mode_list = ['price', 'time']
+        self.mode_str = tk.StringVar()
+        self.mode_str.set(self.mode_list[0])
+        self.mode_select = tk.OptionMenu(self.root_div1, self.mode_str, *self.mode_list)
 
         self.price_label = tk.Label(self.root_div1, text = 'price:', font = ('Arial', 20), bg = 'white')
         self.time_label = tk.Label(self.root_div1, text = 'time:', font = ('Arial', 20), bg = 'white')
@@ -184,8 +188,8 @@ class App:
         self.N_input.place(x = 250, y = 20, width = 50, height = 20)
         self.M_label.place(x = 210, y = 60, width = 20, height = 20)
         self.M_input.place(x = 250, y = 60, width = 50, height = 20)
-        self.mode_label.place(x = 360, y = 20, width = 80, height = 20)
-        self.mode_input.place(x = 450, y = 20, width = 80, height = 20)
+        self.mode_lable.place(x = 360, y = 20, width = 80, height = 20)
+        self.mode_select.place(x = 440, y = 20, width = 100, height = 20)
         self.limit_lable.place(x = 360, y = 60, width = 80, height = 20)
         self.limit_input.place(x = 450, y = 60, width = 80, height = 20)
 
@@ -258,7 +262,7 @@ class App:
     def get_parameters(self):
         N = self.N_input.get("1.0", "end").strip()
         M = self.M_input.get("1.0", "end").strip()
-        mode = self.mode_input.get("1.0", "end").strip()
+        mode = self.mode_str.get()
         limit = self.limit_input.get("1.0", "end").strip()
         return N, M, mode, limit
 

@@ -1,5 +1,21 @@
+import re
 import sys
+import argparse
 from CrossRiver.setup import setParameter
+
+parser = argparse.ArgumentParser(description = 'CrossRiver')
+parser.add_argument('N', type = int, default = 3, help = 'N: integer between 3 and 10', choices = range(3, 11))
+parser.add_argument('M', type = int, default = 0, help = 'M: integer between 0 and 2', choices = range(0, 3))
+parser.add_argument('--debug', '-d', action = 'store_true', help = 'debug mode')
+parser.add_argument('--limit', '-l', type = int, default = None, help = 'limit: price limit when mode is time, and vice versa', metavar = 'limit')
+
+mode = parser.add_mutually_exclusive_group(required = True)
+mode.add_argument('--time', '-t', action = 'store_true', help = 'mode: time')
+mode.add_argument('--price', '-p', action = 'store_true', help = 'mode: price')
+
+alg = parser.add_mutually_exclusive_group(required = True)
+alg.add_argument('-AS', action = 'store_true', help = 'A* Search')
+alg.add_argument('-UC', action = 'store_true', help = 'Uniform Cost')
 
 def main(N: int, M: int, mode: bool, alg: str, debug: bool, limit: int):
     Node = setParameter(N, M, mode = mode, alg = alg, debug = debug, limit = limit)
@@ -18,41 +34,13 @@ def main(N: int, M: int, mode: bool, alg: str, debug: bool, limit: int):
         print('No Solution')
 
 if __name__ == '__main__':
-    N, M, mode, alg = None, None, None, None
-    debug = False
-    limit = None
 
-    try:
-        for arg in sys.argv[1:]:
-            if arg[:2] == '-N':
-                assert N is None, Exception("Duplicate argument")
-                N = int(arg[2:])
-            elif arg[:2] == '-M':
-                assert M is None, Exception("Duplicate argument")
-                M = int(arg[2:])
-            elif arg == '-p' or arg == '-t':
-                assert mode is None, Exception("Duplicate argument")
-                mode = arg[-1]
-            elif arg == '-AS' or arg == '-UC':
-                assert alg is None, Exception("Duplicate argument")
-                alg = arg[1:]
-            elif arg == '-d':
-                assert debug == False, Exception("Duplicate argument")
-                debug = True
-            elif arg[:2] == '-l':
-                assert limit is None, Exception("Duplicate argument")
-                limit = int(arg[2:])
-            else:
-                exit(1)
-    except Exception("Duplicate argument"):
-        exit(1)
-    except:
-        raise Exception("Invalid parameter")
+    args = parser.parse_args()
 
-    if mode == None or N == None or M == None or alg == None:
-        raise Exception("Missing parameter")
+    args.mode = 't' if args.time else 'p'
+    args.alg = 'AS' if args.AS else 'UC'
 
-    valid = mode in ['p', 't'] and N in range(3, 11) and M in range(0, 3) and alg in ['AS', 'UC']
+    valid = args.mode in ['p', 't'] and args.N in range(3, 11) and args.M in range(0, 3) and args.alg in ['AS', 'UC']
     assert valid, 'Invalid Parameter'
 
-    main(N, M, mode, alg, debug, limit = limit)
+    main(args.N, args.M, args.mode[0], args.alg, args.debug, limit = args.limit)
