@@ -12,32 +12,31 @@ $ cd CrossRiver
 $ pip install -r requirements.txt
 
 # GUI app
-$ python -m GUI.app
+$ python -m GUI
 
 # Command line interface
-$ python -m CrossRiver.main --help
+$ python -m CrossRiver --help
 ```
 
 # CLI
 ```
-usage: main.py [-h] [--debug] [--limit limit] (--time | --price) (-AS | -UC)
-               {3,4,5,6,7,8,9,10} {0,1,2}
+usage: CrossRiver [-h] [--debug] [--limit lim] (--time | --price) (-AS | -UC)
+                  {3,4,5,6,7,8,9,10} {0,1,2}
 
-CrossRiver
+Missionaries and Cannibals Problem
 
 positional arguments:
-  {3,4,5,6,7,8,9,10}    N: integer between 3 and 10
-  {0,1,2}               M: integer between 0 and 2
+  {3,4,5,6,7,8,9,10}   N: integer between 3 and 10
+  {0,1,2}              M: integer between 0 and 2
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --debug, -d           debug mode
-  --limit limit, -l limit
-                        limit: price limit when mode is time, and vice versa
-  --time, -t            mode: time
-  --price, -p           mode: price
-  -AS                   A* Search
-  -UC                   Uniform Cost
+  -h, --help           show this help message and exit
+  --debug, -d          debug mode
+  --limit lim, -l lim  limit: price limit when mode is time, and vice versa
+  --time, -t           mode: time
+  --price, -p          mode: price
+  -AS                  A* Search
+  -UC                  Uniform Cost
 ```
 
 # GUI app

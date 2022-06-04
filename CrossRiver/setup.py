@@ -46,7 +46,7 @@ def generateAllPossibleMoves(N, M, boatA_capacity, boatB_capacity):
 
 
 # class factories for the nodes
-def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debug: bool = False, boatA_capacity: int = 2, boatB_capacity: int = 3, boatA_cost: int = 3, boatB_cost: int = 25):
+def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debug: bool = False, boatA_capacity: int = 2, boatB_capacity: int = 3, boatA_cost: int = 3, boatB_cost: int = 25, boatA_time: int = 1, boatB_time: int = 1):
     ''' return a class that construct each state in searching
     cannibals: N
     missionaries: N + M
@@ -199,7 +199,11 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
         def time(self, move: str) -> int:
             if move[:2] == '00' and move[2:] == '00':
                 return 0
-            return 1
+            if move[:2] != '00' and move[2:] == '00':
+                return boatA_time
+            if move[2:] != '00' and move[:2] == '00':
+                return boatB_time
+            return max(boatA_time, boatB_time)
 
         def heuristics_time(self) -> int:
             if self.isTarget():

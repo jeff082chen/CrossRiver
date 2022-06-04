@@ -1,13 +1,11 @@
-import re
-import sys
 import argparse
 from CrossRiver.setup import setParameter
 
-parser = argparse.ArgumentParser(description = 'CrossRiver')
+parser = argparse.ArgumentParser(description = 'Missionaries and Cannibals Problem', prog = "CrossRiver")
 parser.add_argument('N', type = int, default = 3, help = 'N: integer between 3 and 10', choices = range(3, 11))
 parser.add_argument('M', type = int, default = 0, help = 'M: integer between 0 and 2', choices = range(0, 3))
 parser.add_argument('--debug', '-d', action = 'store_true', help = 'debug mode')
-parser.add_argument('--limit', '-l', type = int, default = None, help = 'limit: price limit when mode is time, and vice versa', metavar = 'limit')
+parser.add_argument('--limit', '-l', type = int, default = None, help = 'limit: price limit when mode is time, and vice versa', metavar = 'lim')
 
 mode = parser.add_mutually_exclusive_group(required = True)
 mode.add_argument('--time', '-t', action = 'store_true', help = 'mode: time')

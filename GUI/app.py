@@ -340,10 +340,3 @@ class App:
 
     def quit(self, event = None):
         self.root.destroy()
-
-
-
-if __name__ == '__main__':
-    root = Root()
-    app = App(root)
-    root.mainloop()
