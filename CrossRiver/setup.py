@@ -10,35 +10,33 @@ def generateAllPossibleMoves(N, M, boatA_capacity, boatB_capacity):
 
     for i in temp:
         for j in temp:
-            all_possible_moves.append(i + j)
-
-    for i in temp:
-        all_possible_moves.append('00' + i)
-        all_possible_moves.append(i + '00')
+            all_possible_moves.append(i + j + '00')
+            all_possible_moves.append(i + j + '01')
+            all_possible_moves.append(i + j + '10')
 
     # total cannibals <= N, total missionaries <= N + M
     all_possible_moves = [move for move in all_possible_moves if 
         (int(move[0], 16) + int(move[2], 16) <= N) and (int(move[1], 16) + int(move[3], 16) <= (N + M))
     ]
 
-    # on boatA, cannibals <= missionaries or missionaries = 0, or boatA do not move
+    # on boatA, cannibals <= missionaries or missionaries = 0, or boatA do not move, or paladin on boatA
     all_possible_moves = [move for move in all_possible_moves if 
-        (int(move[1], 16) >= int(move[0], 16)) or int(move[1], 16) == 0 or move[:2] == '00'
+        (int(move[1], 16) >= int(move[0], 16)) or int(move[1], 16) == 0 or move[:2] == '00' or move[4] == '1'
     ]
 
     # same above for boatB
     all_possible_moves = [move for move in all_possible_moves if 
-        (int(move[3], 16) >= int(move[2], 16)) or int(move[3], 16) == 0 or move[2:] == '00'
+        (int(move[3], 16) >= int(move[2], 16)) or int(move[3], 16) == 0 or move[2:] == '00' or move[5] == '1'
     ]
 
     # if boatA move, 1 <= people <= boatA_capacity
     all_possible_moves = [move for move in all_possible_moves if 
-        (1 <= int(move[0], 16) + int(move[1], 16) <= boatA_capacity) or move[:2] == '00'
+        (1 <= int(move[0], 16) + int(move[1], 16) + int(move[4]) <= boatA_capacity) or move[:2] == '00'
     ]
 
     # same above for boatB
     all_possible_moves = [move for move in all_possible_moves if 
-        (1 <= int(move[2], 16) + int(move[3], 16) <= boatB_capacity) or move[2:] == '00'
+        (1 <= int(move[2], 16) + int(move[3], 16) + int(move[5]) <= boatB_capacity) or move[2:] == '00'
     ]
 
     return all_possible_moves
@@ -57,7 +55,7 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
     assert valid, 'Invalid Parameter Error'
 
     # set state
-    state = '3' + hex(N)[2:] + hex(N + M)[2:]
+    state = '3' + hex(N)[2:] + hex(N + M)[2:] + '1'
 
     # [0:1]: number of cannibal/missionary on boatA
     # [2:3]: number of cannibal/missionary on boatB
@@ -72,6 +70,7 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
             # [0]: 00 -> both left, 10 -> boatA right, 01 -> boatB right, 11 -> both right
             # [1]: cannibals in right
             # [2]: missionaries in right
+            # [3]: paladin in right
             self.state = state
             self.move = move
             self.limit = limit
@@ -92,7 +91,11 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
             missionaries_l = N + M - int(self.state[2], 16)
             assert 0 <= missionaries_r <= (N + M), "Invalid State Error"
 
-            return cannibals_r, cannibals_l, missionaries_r, missionaries_l
+            paladin_r = int(self.state[3], 16)
+            paladin_l = 1 - int(self.state[3], 16)
+            assert 0 <= paladin_r <= 1, "Invalid State Error"
+
+            return cannibals_r, cannibals_l, missionaries_r, missionaries_l, paladin_r, paladin_l
 
         # convert move string into number
         def convertMove(self, move):
@@ -108,12 +111,15 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
             cannibals_to_left = int(move[0], 16) * boatA_in_right + int(move[2], 16) * boatB_in_right
             missionaries_to_left = int(move[1], 16) * boatA_in_right + int(move[3], 16) * boatB_in_right
 
-            return cannibals_to_right, cannibals_to_left, missionaries_to_right, missionaries_to_left
+            paladin_to_right = int(move[4], 16) * boatA_in_left + int(move[5], 16) * boatB_in_left
+            paladin_to_left = int(move[4], 16) * boatA_in_right + int(move[5], 16) * boatB_in_right
+
+            return cannibals_to_right, cannibals_to_left, missionaries_to_right, missionaries_to_left, paladin_to_right, paladin_to_left
 
         def isValidMove(self, move: str) -> bool:
             
-            cannibals_r, cannibals_l, missionaries_r, missionaries_l = self.convertState()
-            cannibals_to_r, cannibals_to_l, missionaries_to_r, missionaries_to_l = self.convertMove(move)
+            cannibals_r, cannibals_l, missionaries_r, missionaries_l, paladin_r, paladin_l = self.convertState()
+            cannibals_to_r, cannibals_to_l, missionaries_to_r, missionaries_to_l, paladin_to_right, paladin_to_left = self.convertMove(move)
 
             # before on board
             if cannibals_r < cannibals_to_l:
@@ -124,15 +130,21 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
                 return False
             if missionaries_l < missionaries_to_r:
                 return False
+            if paladin_r < paladin_to_left:
+                return False
+            if paladin_l < paladin_to_right:
+                return False
 
             # after on board
             right_cannibals = cannibals_r - cannibals_to_l
             left_cannibals = cannibals_l - cannibals_to_r
             right_missionaries = missionaries_r - missionaries_to_l
             left_missionaries = missionaries_l - missionaries_to_r
-            if right_cannibals > right_missionaries and right_missionaries != 0:
+            right_paladin = paladin_r - paladin_to_left
+            left_paladin = paladin_l - paladin_to_right
+            if right_cannibals > right_missionaries and right_missionaries != 0 and right_paladin != 1:
                 return False
-            if left_cannibals > left_missionaries and left_missionaries != 0:
+            if left_cannibals > left_missionaries and left_missionaries != 0 and left_paladin != 1:
                 return False
 
             # moving complete
@@ -140,34 +152,37 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
             left_cannibals += cannibals_to_l
             right_missionaries += missionaries_to_r
             left_missionaries += missionaries_to_l
-            if right_cannibals > right_missionaries and right_missionaries != 0:
+            right_paladin += paladin_to_right
+            left_paladin += paladin_to_left
+            if right_cannibals > right_missionaries and right_missionaries != 0 and right_paladin != 1:
                 return False
-            if left_cannibals > left_missionaries and left_missionaries != 0:
+            if left_cannibals > left_missionaries and left_missionaries != 0 and left_paladin != 1:
                 return False
 
             return True
 
         def stateAfterMove(self, move) -> str:
 
-            cannibals_r, _, missionaries_r, _ = self.convertState()
-            cannibals_to_r, cannibals_to_l, missionaries_to_r, missionaries_to_l = self.convertMove(move)
+            cannibals_r, _, missionaries_r, _, paladin_r, _ = self.convertState()
+            cannibals_to_r, cannibals_to_l, missionaries_to_r, missionaries_to_l, paladin_to_right, paladin_to_left = self.convertMove(move)
 
             cannibals_r = cannibals_r - cannibals_to_l + cannibals_to_r
             missionaries_r = missionaries_r - missionaries_to_l + missionaries_to_r
+            paladin_r = paladin_r - paladin_to_left + paladin_to_right
 
-            if move[:2] == '00' and move[2:] == '00': # both didn't move
+            if move == '000000': # both didn't move
                 boats = int(self.state[0])
-            elif move[:2] == '00': # boatA didn't move
+            elif move[:2] == '00' and move[4] == '0': # boatA didn't move
                 boats = int(self.state[0]) ^ 1
-            elif move[2:] == '00': # boatB didn't move
+            elif move[2:4] == '00' and move[5] == '0': # boatB didn't move
                 boats = int(self.state[0]) ^ 2
             else: # both moved
                 boats = int(self.state[0]) ^ 3
 
-            return str(boats) + hex(cannibals_r)[2:] + hex(missionaries_r)[2:]
+            return str(boats) + hex(cannibals_r)[2:] + hex(missionaries_r)[2:] + str(paladin_r)
 
         def isTarget(self) -> bool:
-            return self.state[1:] == '00'
+            return self.state[1:] == '000'
 
         def allValidChild(self) -> list:
             result = []
@@ -190,14 +205,14 @@ def setParameter(N: int, M: int, /, mode: str, alg: str, limit: int = None, debu
 
         def price(self, move: str) -> int:
             cost = 0
-            if move[:2] != '00':
+            if move[:2] != '00' or move[4] == '1':
                 cost += boatA_cost
-            if move[2:] != '00':
+            if move[2:] != '00' or move[4] == '2':
                 cost += boatB_cost
             return cost
 
         def time(self, move: str) -> int:
-            if move[:2] == '00' and move[2:] == '00':
+            if move[:2] == '00' and move[2:] == '00' and move[4] == '0':
                 return 0
             return 1
 
