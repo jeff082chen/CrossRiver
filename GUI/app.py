@@ -31,6 +31,7 @@ class ControlSystem:
         self.lock = False
 
         self.path = None
+        self.current_step = 0
         self.total_time = None
         self.total_price = None
         self.time_list = []
@@ -130,6 +131,7 @@ class ControlSystem:
 
         self.total_price = None
         self.total_time = None
+        self.current_step = 0
 
     def update(self, N, M):
         self.right_cannibals = N
@@ -154,12 +156,17 @@ class App:
         self.state_label = tk.Label(self.root_div1, text = 'ready to search', font = ('Arial', 20), bg = 'white')
         self.search_button = tk.Button(self.root_div1, text = 'search', bg = 'white')
         self.search_button.bind('<Button-1>', self.search)
-        self.move_button = tk.Button(self.root_div1, text = 'move', bg = 'white')
-        self.move_button.bind('<Button-1>', self.move)
         self.reset_button = tk.Button(self.root_div1, text = 'reset', bg = 'white')
         self.reset_button.bind('<Button-1>', self.reset)
         self.quit_button = tk.Button(self.root_div1, text = 'quit', bg = 'white')
         self.quit_button.bind('<Button-1>', self.quit)
+
+        self.nextmove_button = tk.Button(self.root_div1, text = 'next', bg = 'white')
+        self.nextmove_button.bind('<Button-1>', self.nextmove)
+        self.prevmove_button = tk.Button(self.root_div1, text = 'prev', bg = 'white')
+        self.prevmove_button.bind('<Button-1>', self.prevmove)
+        self.automove_button = tk.Button(self.root_div1, text = 'auto', bg = 'white')
+        self.automove_button.bind('<Button-1>', self.automove)
 
         self.N_label = tk.Label(self.root_div1, text = 'N:', font = ('Arial', 20), bg = 'white')
         self.N_input = tk.Text(self.root_div1, width = 3, height = 1, font = ('Arial', 12), bg = 'white', highlightbackground = "black", highlightthickness = 2)
@@ -179,10 +186,13 @@ class App:
 
         # display items in root_div1
         self.search_button.place(x = 50, y = 20, width = 80, height = 20)
-        self.move_button.place(x = 50, y = 50, width = 80, height = 20)
-        self.reset_button.place(x = 50, y = 80, width = 80, height = 20)
-        self.quit_button.place(x = 50, y = 110, width = 80, height = 20)
+        self.reset_button.place(x = 50, y = 50, width = 80, height = 20)
+        self.quit_button.place(x = 50, y = 80, width = 80, height = 20)
         self.state_label.place(x = 120, y = 110, width = 200, height = 20)
+
+        self.nextmove_button.place(x = 360, y = 110, width = 80, height = 20)
+        self.prevmove_button.place(x = 460, y = 110, width = 80, height = 20)
+        self.automove_button.place(x = 560, y = 110, width = 80, height = 20)
 
         self.N_label.place(x = 210, y = 20, width = 20, height = 20)
         self.N_input.place(x = 250, y = 20, width = 50, height = 20)
@@ -317,6 +327,52 @@ class App:
             self.control.total_time = self.control.time_list[i]
             self.update()
             self.move_boats(int(step[0], 16), int(step[1], 16), int(step[2], 16), int(step[3], 16))
+        self.state_label.config(text = 'ready to reset')
+        self.control.ready_to_move = False
+        self.control.ready_to_reset = True
+        self.control.lock = False
+
+    def nextmove(self, event = None):
+        if self.control.lock or not self.control.ready_to_move:
+            return
+        self.control.lock = True
+        self.control.total_price = self.control.price_list[self.control.current_step]
+        self.control.total_time = self.control.time_list[self.control.current_step]
+        self.update()
+        step = self.control.path[self.control.current_step]
+        self.move_boats(int(step[0], 16), int(step[1], 16), int(step[2], 16), int(step[3], 16))
+        self.control.current_step += 1
+        if self.control.current_step == len(self.control.path):
+            self.state_label.config(text = 'ready to reset')
+            self.control.ready_to_move = False
+            self.control.ready_to_reset = True
+        self.control.lock = False
+
+    def prevmove(self, event = None):
+        if self.control.lock or not self.control.ready_to_move:
+            return
+        if self.control.current_step == 0:
+            return
+        self.control.lock = True
+        self.control.current_step -= 1
+        self.control.total_price = self.control.price_list[self.control.current_step]
+        self.control.total_time = self.control.time_list[self.control.current_step]
+        self.update()
+        step = self.control.path[self.control.current_step]
+        self.move_boats(int(step[0], 16), int(step[1], 16), int(step[2], 16), int(step[3], 16))
+        self.control.lock = False
+
+    def automove(self, event = None):
+        if self.control.lock or not self.control.ready_to_move:
+            return
+        self.control.lock = True
+        for i in range(self.control.current_step, len(self.control.path)):
+            self.control.total_price = self.control.price_list[i]
+            self.control.total_time = self.control.time_list[i]
+            self.update()
+            step = self.control.path[i]
+            self.move_boats(int(step[0], 16), int(step[1], 16), int(step[2], 16), int(step[3], 16))
+            self.control.current_step = i
         self.state_label.config(text = 'ready to reset')
         self.control.ready_to_move = False
         self.control.ready_to_reset = True

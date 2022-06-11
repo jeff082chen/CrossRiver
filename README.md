@@ -48,7 +48,8 @@ optional arguments:
     + limit: limit of cost (time limit if -p, price limit if -t) (default: no limit)
     + mode: price (p for short) or time (t for short)
 2. press `search` button
-3. when label shows `ready to move`, press `move` button
-4. wait for the move to finish
-5. when label shows `ready to reset`, press `reset` button
-6. press `quit` button to quit, or press `search` button to restart
+3. wait until label shows `ready to move`
+4. press `next` button to move, press `prev` button go back to previous step
+5. press `auto` button to finish the game automatically
+6. when label shows `ready to reset`, press `reset` button
+7. press `quit` button to quit, or press `search` button to restart
